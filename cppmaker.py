@@ -29,8 +29,14 @@ for place, element in enumerate(iniFile):
 
 make_directories = True
 generate_bbcpp = True
+generate_nesgtcpp = True
 generate_x0files = True
 generate_paramfiles = True
+compile_bbcpp = True
+compile_omsgt = True
+compile_nesgt = True
+compile_rdsgt = False
+
 
 for type in prob_type_list:
     for object in iniFile:
@@ -87,10 +93,51 @@ for type in prob_type_list:
                     thefile.write('%s ' % item)
             thefile.close()
 
+        if generate_nesgtcpp:
+            with open("bb.cpp", 'r') as file:
+                # Ouvrir le history.txt
+                bbcpp = file.readlines()
+                file.close()
+
+            instance_line = list(bbcpp[688])
+            type_line= list(bbcpp[689])
+            nprob_line = list(bbcpp[690])
+            n_line = list(bbcpp[691])
+            m_line = list(bbcpp[692])
+            f_line = list(bbcpp[734])
+            f_line[12:]="-f;\n"
+            i=1
+
+            ## on cree un dict pour iterer sur les variable a modifier
+            line_dict={instance:instance_line,prob_type:type_line,nprob:nprob_line,n:n_line,m:m_line}
+
+            for obj in line_dict:
+                idx = 33
+                for el in list(str(obj)):
+                    line_dict[obj][idx]= el
+                    idx = idx + 1
+                line_dict[obj][:]=line_dict[obj][0:idx]
+                line_dict[obj].append(' ')
+                line_dict[obj].append(';')
+                line_dict[obj].append('\n')
+
+            bbcpp[688] = ''.join(instance_line)
+            bbcpp[689] = ''.join(type_line)
+            bbcpp[690] = ''.join(nprob_line)
+            bbcpp[691] = ''.join(n_line)
+            bbcpp[692] = ''.join(m_line)
+            bbcpp[734] = ''.join(f_line)
+
+            #thefile = open(dir_name+"\ bb.cpp", 'w')
+            thefile = open(dir_name+"/nesgt.cpp", 'w')
+            for item in bbcpp:
+                    thefile.write('%s ' % item)
+            thefile.close()
+
         if generate_x0files:
             generation = "./generate_x0.exe " + str(instance.value)
             args = shlex.split(generation)
-            result = subprocess.Popen(args,stdout=subprocess.PIPE).communicate()[0][:-3]
+            result = subprocess.Popen(args,stdout=subprocess.PIPE).communicate()[0][:-2]
             #result = subprocess.run(generation,stdout=subprocess.PIPE).stdout.decode('utf-8')[:-3]
             #os.rename("path/to/current/file.foo", "path/to/new/desination/for/file.foo")
 
@@ -107,8 +154,8 @@ for type in prob_type_list:
 
         if generate_paramfiles:
             seeds = ['1','2','3','4','5','6','7','8','9','10']
-            direction_types = {'g':'GPS','m' : 'ORTHO'}
-            ordering_strategies = ['n','ol','os','om']
+            direction_types = {'c':'CS','g':'GPS','m' : 'ORTHO'}
+            ordering_strategies = ['n','ol','os','om','or','oo','no']
             with open("param.txt", 'r') as file:
                 # Ouvrir le param.txt
                 param_base = file.readlines()
@@ -183,6 +230,30 @@ for type in prob_type_list:
                         thefile.close()
                         print (str(num_inst) + type + direction + strat + seed)
 
+        if compile_bbcpp == True:
+            exename = str(instance.value)+'_'+type+"/bb.exe"
+            cppname = str(instance.value) + '_' + type + "/bb.cpp"
+            args=shlex.split("g++ -o " + exename +" "+ cppname)
+            subprocess.Popen(args)
+
+        if compile_omsgt == True:
+            exename = str(instance.value)+'_'+type+"/omsgt.exe"
+            cppname = str(instance.value) + '_' + type + "/bb.cpp"
+            args=shlex.split("g++ -o " + exename +" "+ cppname)
+            subprocess.Popen(args)
+
+        if compile_nesgt == True:
+            exename = str(instance.value)+'_'+type+"/nesgt.exe"
+            cppname = str(instance.value) + '_' + type + "/nesgt.cpp"
+            args=shlex.split("g++ -o " + exename +" "+ cppname)
+            subprocess.Popen(args)
+
+if compile_rdsgt == True:
+    exename = "rd.exe"
+    cppname = "/rd.cpp"
+    args=shlex.split("g++ -o " + exename +" "+ cppname)
+    subprocess.Popen(args)
+    
 # n_instance
 # n
 # m

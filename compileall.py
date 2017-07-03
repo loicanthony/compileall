@@ -13,6 +13,7 @@ for instance in instances:
         # exename = instance+'_'+type+"/bb.exe"
         # cppname = instance + '_' + type + "/bb.cpp"
         # call(["g++", "-o", exename, cppname])
+
         for algo in algos:
             for strategy in strategies:
                 foldername = instance+'_'+type+'/'+algo+strategy
